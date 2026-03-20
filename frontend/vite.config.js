@@ -2,7 +2,6 @@ import path from "path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -10,9 +9,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
- 
+  base: "./", 
   build: {
-    outDir: "dist", // thư mục build
+    outDir: "dist",
   },
-  base: "/",
 });
