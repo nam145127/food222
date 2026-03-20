@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import api from "../servers/api"
 
 import {
@@ -7,7 +7,9 @@ import {
   ShoppingCart,
   User,
   Moon,
-  Sun
+  Sun,
+  Menu,
+  X
 } from "lucide-react"
 
 import { toast } from "sonner"
@@ -18,22 +20,20 @@ export default function Header() {
   const [search, setSearch] = useState("")
   const [openUser, setOpenUser] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [openMenu, setOpenMenu] = useState(false)
 
   const navigate = useNavigate()
+  const userRef = useRef()
 
   const user = JSON.parse(localStorage.getItem("user") || "null")
-
 
   // ======================
   // FETCH CART
   // ======================
-
   const fetchCart = async () => {
-
     if (!user) return
 
     try {
-
       const res = await api.get("/cart")
 
       const total = res.data.reduce(
@@ -44,157 +44,109 @@ export default function Header() {
       setCartCount(total)
 
     } catch (err) {
-
       console.log(err)
-
     }
-
   }
-
 
   // ======================
   // LOAD CART
   // ======================
-
   useEffect(() => {
-
     fetchCart()
-
   }, [user])
-
 
   // ======================
   // LISTEN CART UPDATE
   // ======================
-
   useEffect(() => {
-
     const handleUpdate = () => fetchCart()
-
     window.addEventListener("cartUpdated", handleUpdate)
 
     return () => {
       window.removeEventListener("cartUpdated", handleUpdate)
     }
-
   }, [])
 
+  // ======================
+  // CLICK OUTSIDE USER MENU
+  // ======================
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userRef.current && !userRef.current.contains(e.target)) {
+        setOpenUser(false)
+      }
+    }
 
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   // ======================
   // THEME
   // ======================
-
   const toggleTheme = () => {
-
     setDark(!dark)
     document.documentElement.classList.toggle("dark")
-
   }
-
-
 
   // ======================
   // SEARCH
   // ======================
-
   const handleSearch = (e) => {
-
     if (e.key === "Enter" && search.trim()) {
-
       navigate(`/foods?search=${search}`)
-
+      setOpenMenu(false)
     }
-
   }
-
-
 
   // ======================
   // LOGOUT
   // ======================
-
   const handleLogout = async () => {
-
     try {
-
       const refreshToken = localStorage.getItem("refreshToken")
 
       if (refreshToken) {
-
         await api.post("/auth/logout", {
           token: refreshToken
         })
-
       }
-
     } catch (error) {
-
       console.log(error)
-
     }
 
     localStorage.clear()
-
     setCartCount(0)
     setOpenUser(false)
 
     toast.success("Đã đăng xuất")
-
     navigate("/login")
-
   }
 
-
-
   return (
-
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b dark:bg-gray-900">
 
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-
+      <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
 
         {/* LOGO */}
-
         <Link
           to="/home"
-          className="text-2xl font-bold text-orange-500"
+          className="text-xl md:text-2xl font-bold text-orange-500"
         >
           ViperFood
         </Link>
 
-
-
-        {/* MENU */}
-
-        <nav className="hidden lg:flex items-center gap-6 text-gray-700 dark:text-gray-200">
-
-          <Link to="/home" className="hover:text-orange-500">
-            Trang chủ
-          </Link>
-
-          <Link to="/food" className="hover:text-orange-500">
-            Món ăn
-          </Link>
-
-          <Link to="/about" className="hover:text-orange-500">
-            Giới thiệu
-          </Link>
-
-          <Link to="/contact" className="hover:text-orange-500">
-            Liên hệ
-          </Link>
-
+        {/* MENU DESKTOP */}
+        <nav className="hidden lg:flex items-center gap-6 text-gray-700 dark:text-gray-200 font-medium">
+          <Link to="/home" className="hover:text-orange-500">Trang chủ</Link>
+          <Link to="/food" className="hover:text-orange-500">Món ăn</Link>
+          <Link to="/about" className="hover:text-orange-500">Giới thiệu</Link>
+          <Link to="/contact" className="hover:text-orange-500">Liên hệ</Link>
         </nav>
 
-
-
-        {/* SEARCH */}
-
-        <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 w-72">
-
+        {/* SEARCH DESKTOP */}
+        <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 w-64 lg:w-72 focus-within:ring-2 focus-within:ring-orange-400">
           <Search size={18} className="text-gray-500" />
-
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -202,54 +154,28 @@ export default function Header() {
             placeholder="Tìm món ăn..."
             className="bg-transparent outline-none px-2 w-full text-sm"
           />
-
         </div>
 
-
-
-        {/* ICONS */}
-
-        <div className="flex items-center gap-5 text-gray-700 dark:text-gray-200">
-
+        {/* RIGHT */}
+        <div className="flex items-center gap-4">
 
           {/* DARK MODE */}
-
-          <button
-            onClick={toggleTheme}
-            className="hover:text-orange-500"
-          >
+          <button onClick={toggleTheme} className="hover:text-orange-500">
             {dark ? <Sun size={22} /> : <Moon size={22} />}
           </button>
 
-
-
           {/* CART */}
-
-          <Link
-            to="/cart"
-            className="relative hover:text-orange-500"
-          >
-
+          <Link to="/cart" className="relative hover:text-orange-500">
             <ShoppingCart size={22} />
-
             {cartCount > 0 && (
-
               <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center">
-
                 {cartCount}
-
               </span>
-
             )}
-
           </Link>
 
-
-
           {/* USER */}
-
-          <div className="relative">
-
+          <div className="relative hidden md:block" ref={userRef}>
             <button
               onClick={() => setOpenUser(!openUser)}
               className="hover:text-orange-500"
@@ -257,61 +183,91 @@ export default function Header() {
               <User size={22} />
             </button>
 
-
             {openUser && (
-
-              <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border">
+              <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border animate-fade-in">
 
                 {!user ? (
-
                   <Link
                     to="/login"
                     className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     Đăng nhập
                   </Link>
-
                 ) : (
-
                   <>
-
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Thông tin cá nhân
-                    </Link>
-
-                    <Link
-                      to="/my-orders"
-                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Đơn hàng
-                    </Link>
-
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
+                    <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100">Thông tin cá nhân</Link>
+                    <Link to="/my-orders" className="block px-4 py-2 hover:bg-gray-100">Đơn hàng</Link>
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-2 hover:bg-gray-100">
                       Đăng xuất
                     </button>
-
                   </>
-
                 )}
 
               </div>
+            )}
+          </div>
 
+          {/* MOBILE MENU BUTTON */}
+          <button
+            className="lg:hidden"
+            onClick={() => setOpenMenu(true)}
+          >
+            <Menu size={24} />
+          </button>
+
+        </div>
+      </div>
+
+      {/* MOBILE MENU */}
+      {openMenu && (
+      <div className=" backdrop-blur-md">
+
+          <div className="bg-white dark:bg-gray-900 w-64 h-full p-5 space-y-5 shadow-lg">
+
+            {/* HEADER */}
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold text-lg">Menu</h2>
+              <button onClick={() => setOpenMenu(false)}>
+                <X />
+              </button>
+            </div>
+
+            {/* SEARCH */}
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded px-3 py-2">
+              <Search size={18} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearch}
+                placeholder="Tìm món..."
+                className="bg-transparent outline-none px-2 w-full"
+              />
+            </div>
+
+            {/* LINKS */}
+            <nav className="flex flex-col gap-3 font-medium">
+              <Link to="/home" onClick={() => setOpenMenu(false)}>Trang chủ</Link>
+              <Link to="/food" onClick={() => setOpenMenu(false)}>Món ăn</Link>
+              <Link to="/about" onClick={() => setOpenMenu(false)}>Giới thiệu</Link>
+              <Link to="/contact" onClick={() => setOpenMenu(false)}>Liên hệ</Link>
+            </nav>
+
+            {/* USER */}
+            {!user ? (
+              <Link to="/login" onClick={() => setOpenMenu(false)}>
+                Đăng nhập
+              </Link>
+            ) : (
+              <>
+                <Link to="/profile" onClick={() => setOpenMenu(false)}>Cá nhân</Link>
+                <Link to="/my-orders" onClick={() => setOpenMenu(false)}>Đơn hàng</Link>
+                <button onClick={handleLogout}>Đăng xuất</button>
+              </>
             )}
 
           </div>
-
         </div>
-
-      </div>
-
+      )}
     </header>
-
   )
-
 }
