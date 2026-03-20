@@ -24,7 +24,7 @@ function App() {
 
   return (
 
-    <BrowserRouter>
+    <HashRouter>
 
       {/* TOAST */}
       <Toaster
@@ -132,7 +132,7 @@ function App() {
 
       </Routes>
 
-    </BrowserRouter>
+    </HashRouter>
 
   )
 
