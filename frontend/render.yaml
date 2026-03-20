@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: frontend
+    name: Viper
     env: static
     staticPublishPath: dist
     routes:
