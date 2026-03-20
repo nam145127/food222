@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: frontend
+    env: static
+    staticPublishPath: dist
+    routes:
+      - type: redirect
+        source: "/**"
+        destination: "/index.html"
