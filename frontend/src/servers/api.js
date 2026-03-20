@@ -1,12 +1,12 @@
 import axios from "axios";
 
+const API_URL = "https://food222.onrender.com/api";
+
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_URL,
 });
 
-// REQUEST INTERCEPTOR
 api.interceptors.request.use((config) => {
-
   const token = localStorage.getItem("accessToken");
 
   if (token) {
@@ -14,32 +14,22 @@ api.interceptors.request.use((config) => {
   }
 
   return config;
-
 });
 
-
-// RESPONSE INTERCEPTOR (refresh token)
 api.interceptors.response.use(
-
   (response) => response,
 
   async (error) => {
-
     const originalRequest = error.config;
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
-    ) {
-
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-
         const refreshToken = localStorage.getItem("refreshToken");
 
         const res = await axios.post(
-          "http://localhost:5000/api/auth/refresh",
+          `${API_URL}/auth/refresh`,
           { refreshToken }
         );
 
@@ -47,20 +37,14 @@ api.interceptors.response.use(
 
         localStorage.setItem("accessToken", newAccessToken);
 
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return api(originalRequest);
-
       } catch (err) {
-
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-
         window.location.href = "/login";
-
       }
-
     }
 
     return Promise.reject(error);
