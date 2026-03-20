@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: Viper
-    env: static
-    staticPublishPath: dist
-    routes:
-      - type: redirect
-        source: "/**"
-        destination: "/index.html"
