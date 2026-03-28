@@ -16,11 +16,10 @@ exports.register = async ({ name, email, password }) => {
 
   const hashed = await bcrypt.hash(password, 10);
 
-   const result = await pool.query(
+  const result = await pool.query(
   "INSERT INTO users (name,email,password,is_active,role) VALUES ($1,$2,$3,$4,$5) RETURNING id",
   [name, email, hashed, true, "user"]
 );
-
   return {
     id: result.rows[0].id,
     name,
